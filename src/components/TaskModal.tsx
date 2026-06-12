@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { getComments, createComment, updateTask } from '../server/tasks';
 import type { Task, User, Comment } from '../db/memoryStore';
 import { RichTextEditor } from './ui/RichTextEditor';
+import { useRouter } from '@tanstack/react-router';
 
 const ContentWrapper = styled.div`
   display: flex;
@@ -52,6 +53,22 @@ const PropertyValue = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background-color: white;
+  font-family: inherit;
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.text.main};
+  cursor: pointer;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
 `;
 
 const Avatar = styled.img`
@@ -113,8 +130,8 @@ interface TaskModalProps {
 export function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
   const [comments, setComments] = useState<PopulatedComment[]>([]);
   const [newComment, setNewComment] = useState('');
-
   const [description, setDescription] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     if (isOpen && task) {
@@ -197,26 +214,48 @@ export function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
         <SidebarColumn>
           <PropertyLabel>Status</PropertyLabel>
           <PropertyValue>
-            <span style={{ textTransform: 'uppercase', fontSize: '12px', fontWeight: 600, background: '#e0e5ea', padding: '4px 8px', borderRadius: '4px' }}>
-              {task.status.replace('-', ' ')}
-            </span>
+            <Select 
+              value={task.status}
+              onChange={async (e) => {
+                await updateTask({ data: { id: task.id, status: e.target.value as Task['status'] } });
+                router.invalidate();
+              }}
+            >
+              <option value="todo">To Do</option>
+              <option value="in-progress">In Progress</option>
+              <option value="done">Done</option>
+            </Select>
           </PropertyValue>
 
           <PropertyLabel>Assignee</PropertyLabel>
           <PropertyValue>
-            {task.assignee ? (
-              <>
-                <Avatar src={task.assignee.avatarUrl} alt={task.assignee.name} />
-                {task.assignee.name}
-              </>
-            ) : (
-              <span style={{ color: '#6D7A8C' }}>Unassigned</span>
-            )}
+            {task.assignee && <Avatar src={task.assignee.avatarUrl} alt={task.assignee.name} style={{ width: 20, height: 20 }} />}
+            <Select 
+              value={task.assigneeId || ''}
+              onChange={async (e) => {
+                await updateTask({ data: { id: task.id, assigneeId: e.target.value } });
+                router.invalidate();
+              }}
+            >
+              <option value="">Unassigned</option>
+              <option value="user-1">Alice</option>
+              <option value="user-2">Bob</option>
+            </Select>
           </PropertyValue>
 
           <PropertyLabel>Priority</PropertyLabel>
-          <PropertyValue style={{ textTransform: 'capitalize' }}>
-            {task.priority}
+          <PropertyValue>
+            <Select 
+              value={task.priority}
+              onChange={async (e) => {
+                await updateTask({ data: { id: task.id, priority: e.target.value as Task['priority'] } });
+                router.invalidate();
+              }}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </Select>
           </PropertyValue>
 
           <PropertyLabel>Labels</PropertyLabel>
