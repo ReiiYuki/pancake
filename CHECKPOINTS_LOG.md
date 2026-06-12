@@ -2,3 +2,8 @@
 **Risk Assessment:** Taking a baseline checkpoint before adding complex Rich Text editing, inline task creation, and extensive UI polish.
 **Description:** Initial TanStack Start MVP with basic Kanban and textarea-based document editing.
 **Files Included:** `src/`, `package.json`, `vite.config.ts`
+
+## [2026-06-12 23:39:43] Checkpoint ID: checkpoint_2_task_modal_schema
+**Risk Assessment:** Taking a checkpoint after implementing a complex Task Details Modal and migrating the store schema to match production models.
+**Description:** Kanban board has rich metadata and Task Modal shows comments, assignee, priority, and dates.
+**Files Included:** `src/`, `package.json`, `vite.config.ts`
