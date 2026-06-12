@@ -7,7 +7,6 @@ export interface Task {
   status: 'todo' | 'in-progress' | 'done';
   priority: 'low' | 'medium' | 'high';
   projectId: string;
-  assignee?: { name: string; avatarUrl: string };
 }
 
 export interface Project {
@@ -38,8 +37,7 @@ db.tasks.push({
   description: 'Create the in-memory database',
   status: 'done',
   priority: 'high',
-  projectId: 'proj-1',
-  assignee: { name: 'Alice', avatarUrl: 'https://i.pravatar.cc/150?u=alice' }
+  projectId: 'proj-1'
 });
 
 db.tasks.push({
@@ -48,8 +46,7 @@ db.tasks.push({
   description: 'Create Jira-like drag and drop board',
   status: 'todo',
   priority: 'medium',
-  projectId: 'proj-1',
-  assignee: { name: 'Bob', avatarUrl: 'https://i.pravatar.cc/150?u=bob' }
+  projectId: 'proj-1'
 });
 
 db.documents.push({

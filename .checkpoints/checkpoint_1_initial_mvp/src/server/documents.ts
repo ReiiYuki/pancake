@@ -26,22 +26,3 @@ export const updateDocument = createServerFn({ method: 'POST' })
     }
     throw new Error('Document not found');
   });
-
-export const createDocument = createServerFn({ method: 'POST' })
-  .validator((data: Omit<Document, 'id'>) => data)
-  .handler(async ({ data }) => {
-    const newDoc: Document = { ...data, id: uuidv4() };
-    db.documents.push(newDoc);
-    return newDoc;
-  });
-
-export const deleteDocument = createServerFn({ method: 'POST' })
-  .validator((id: string) => id)
-  .handler(async ({ data: id }) => {
-    const docIndex = db.documents.findIndex((d) => d.id === id);
-    if (docIndex > -1) {
-      const [deletedDoc] = db.documents.splice(docIndex, 1);
-      return deletedDoc;
-    }
-    throw new Error('Document not found');
-  });

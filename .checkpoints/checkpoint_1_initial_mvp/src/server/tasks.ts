@@ -28,17 +28,6 @@ export const updateTaskStatus = createServerFn({ method: 'POST' })
     throw new Error('Task not found');
   });
 
-export const deleteTask = createServerFn({ method: 'POST' })
-  .validator((id: string) => id)
-  .handler(async ({ data: id }) => {
-    const taskIndex = db.tasks.findIndex((t) => t.id === id);
-    if (taskIndex > -1) {
-      const [deletedTask] = db.tasks.splice(taskIndex, 1);
-      return deletedTask;
-    }
-    throw new Error('Task not found');
-  });
-
 export const getProjects = createServerFn({ method: 'GET' })
   .handler(async () => {
     return db.projects;

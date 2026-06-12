@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { getProjects, getTasks } from '../server/tasks'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -58,16 +58,14 @@ function Dashboard() {
       <h2 style={{ marginBottom: '16px' }}>Recent Projects</h2>
       <Grid>
         {projects.map((p) => (
-          <Link key={p.id} to={`/projects/${p.id}/board`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <Card $glass $clickable>
-              <ProjectCardTitle>{p.name}</ProjectCardTitle>
-              <ProjectCardDesc>{p.description}</ProjectCardDesc>
-              <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#6D7A8C' }}>
-                <span>{todoTasks} To Do</span>
-                <span>{doneTasks} Done</span>
-              </div>
-            </Card>
-          </Link>
+          <Card key={p.id} $glass $clickable>
+            <ProjectCardTitle>{p.name}</ProjectCardTitle>
+            <ProjectCardDesc>{p.description}</ProjectCardDesc>
+            <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#6D7A8C' }}>
+              <span>{todoTasks} To Do</span>
+              <span>{doneTasks} Done</span>
+            </div>
+          </Card>
         ))}
       </Grid>
       

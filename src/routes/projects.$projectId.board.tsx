@@ -1,15 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { getTasks, updateTaskStatus } from '../server/tasks'
+import { getTasks, updateTaskStatus, createTask, deleteTask } from '../server/tasks'
 import styled from 'styled-components'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { DropResult } from '@hello-pangea/dnd'
 import { useState, useEffect } from 'react'
 import type { Task } from '../db/memoryStore'
+import { Plus, Trash2 } from 'lucide-react'
 
 export const Route = createFileRoute('/projects/$projectId/board')({
   loader: async ({ params }) => {
     const tasks = await getTasks({ data: params.projectId })
-    return { tasks }
+    return { tasks, projectId: params.projectId }
   },
   component: Board,
 })
@@ -60,9 +61,88 @@ const TaskCard = styled.div<{ $isDragging: boolean }>`
   border: 1px solid ${({ theme }) => theme.colors.border};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
   cursor: grab;
+  position: relative;
 
   &:active {
     cursor: grabbing;
+  }
+
+  .delete-btn {
+    opacity: 0;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: ${({ theme }) => theme.colors.text.light};
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      color: ${({ theme }) => theme.colors.primaryHover};
+    }
+  }
+
+  &:hover .delete-btn {
+    opacity: 1;
+  }
+`
+
+const AddButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.colors.text.light};
+  background: transparent;
+  border: none;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  cursor: pointer;
+  border-bottom-left-radius: ${({ theme }) => theme.borderRadius.lg};
+  border-bottom-right-radius: ${({ theme }) => theme.borderRadius.lg};
+  transition: all ${({ theme }) => theme.transitions.default};
+
+  &:hover {
+    background-color: rgba(0,0,0,0.03);
+    color: ${({ theme }) => theme.colors.text.main};
+  }
+`
+
+const InlineAddForm = styled.div`
+  padding: ${({ theme }) => theme.spacing.sm};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ theme }) => theme.colors.background};
+  border-bottom-left-radius: ${({ theme }) => theme.borderRadius.lg};
+  border-bottom-right-radius: ${({ theme }) => theme.borderRadius.lg};
+
+  input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid ${({ theme }) => theme.colors.border};
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    
+    button {
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+    }
+    .cancel {
+      background: transparent;
+      color: ${({ theme }) => theme.colors.text.light};
+    }
+    .add {
+      background: ${({ theme }) => theme.colors.primary};
+      color: white;
+    }
   }
 `
 
@@ -73,10 +153,11 @@ const COLUMNS: { id: Task['status']; title: string }[] = [
 ]
 
 function Board() {
-  const { tasks: initialTasks } = Route.useLoaderData()
+  const { tasks: initialTasks, projectId } = Route.useLoaderData()
   const [tasks, setTasks] = useState(initialTasks)
+  const [addingToCol, setAddingToCol] = useState<Task['status'] | null>(null)
+  const [newTaskTitle, setNewTaskTitle] = useState('')
 
-  // Hydration sync
   useEffect(() => {
     setTasks(initialTasks)
   }, [initialTasks])
@@ -95,11 +176,52 @@ function Board() {
     )
     setTasks(updatedTasks)
 
-    // Server update
     try {
       await updateTaskStatus({ data: { id: draggableId, status: newStatus } })
     } catch (e) {
-      // Revert if error
+      setTasks(initialTasks) // Revert
+    }
+  }
+
+  const handleAddTask = async (status: Task['status']) => {
+    if (!newTaskTitle.trim()) return
+    
+    // Optimistic creation
+    const tempId = `temp-${Date.now()}`
+    const tempTask: Task = {
+      id: tempId,
+      title: newTaskTitle,
+      description: '',
+      status,
+      priority: 'medium',
+      projectId
+    }
+    setTasks([...tasks, tempTask])
+    setAddingToCol(null)
+    setNewTaskTitle('')
+
+    try {
+      const realTask = await createTask({
+        data: {
+          title: tempTask.title,
+          description: '',
+          status,
+          priority: 'medium',
+          projectId
+        }
+      })
+      setTasks(current => current.map(t => t.id === tempId ? realTask : t))
+    } catch (e) {
+      setTasks(tasks) // Revert
+    }
+  }
+
+  const handleDeleteTask = async (taskId: string) => {
+    // Optimistic
+    setTasks(current => current.filter(t => t.id !== taskId))
+    try {
+      await deleteTask({ data: taskId })
+    } catch (e) {
       setTasks(initialTasks)
     }
   }
@@ -133,8 +255,21 @@ function Board() {
                             {...provided.dragHandleProps}
                             $isDragging={snapshot.isDragging}
                           >
-                            <div style={{ fontWeight: 500, marginBottom: '8px' }}>{task.title}</div>
-                            <div style={{ fontSize: '12px', color: '#6D7A8C' }}>{task.priority} priority</div>
+                            <div style={{ fontWeight: 500, marginBottom: '8px', paddingRight: '20px' }}>{task.title}</div>
+                            <button className="delete-btn" onClick={() => handleDeleteTask(task.id)}>
+                              <Trash2 size={14} />
+                            </button>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ fontSize: '12px', color: '#6D7A8C' }}>{task.priority} priority</div>
+                              {task.assignee && (
+                                <img 
+                                  src={task.assignee.avatarUrl} 
+                                  alt={task.assignee.name} 
+                                  title={task.assignee.name}
+                                  style={{ width: '24px', height: '24px', borderRadius: '50%' }}
+                                />
+                              )}
+                            </div>
                           </TaskCard>
                         )}
                       </Draggable>
@@ -143,6 +278,34 @@ function Board() {
                   </TaskList>
                 )}
               </Droppable>
+              {addingToCol === col.id ? (
+                <InlineAddForm>
+                  <input 
+                    autoFocus
+                    placeholder="What needs to be done?"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddTask(col.id)
+                      if (e.key === 'Escape') {
+                        setAddingToCol(null)
+                        setNewTaskTitle('')
+                      }
+                    }}
+                  />
+                  <div className="actions">
+                    <button className="cancel" onClick={() => {
+                      setAddingToCol(null)
+                      setNewTaskTitle('')
+                    }}>Cancel</button>
+                    <button className="add" onClick={() => handleAddTask(col.id)}>Add</button>
+                  </div>
+                </InlineAddForm>
+              ) : (
+                <AddButton onClick={() => setAddingToCol(col.id)}>
+                  <Plus size={16} /> Add Task
+                </AddButton>
+              )}
             </Column>
           ))}
         </BoardContainer>
