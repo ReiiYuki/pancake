@@ -16,12 +16,11 @@ export const getDocument = createServerFn({ method: 'GET' })
   });
 
 export const updateDocument = createServerFn({ method: 'POST' })
-  .validator((data: { id: string; title: string; content: string }) => data)
+  .validator((data: { id: string; title?: string; content?: string; coverUrl?: string; icon?: string }) => data)
   .handler(async ({ data }) => {
     const docIndex = db.documents.findIndex((d) => d.id === data.id);
     if (docIndex > -1) {
-      db.documents[docIndex].title = data.title;
-      db.documents[docIndex].content = data.content;
+      db.documents[docIndex] = { ...db.documents[docIndex], ...data, updatedAt: new Date().toISOString() };
       return db.documents[docIndex];
     }
     throw new Error('Document not found');

@@ -39,6 +39,17 @@ export const updateTaskStatus = createServerFn({ method: 'POST' })
     throw new Error('Task not found');
   });
 
+export const updateTask = createServerFn({ method: 'POST' })
+  .validator((data: Partial<Task> & { id: string }) => data)
+  .handler(async ({ data }) => {
+    const taskIndex = db.tasks.findIndex((t) => t.id === data.id);
+    if (taskIndex > -1) {
+      db.tasks[taskIndex] = { ...db.tasks[taskIndex], ...data, updatedAt: new Date().toISOString() };
+      return db.tasks[taskIndex];
+    }
+    throw new Error('Task not found');
+  });
+
 export const deleteTask = createServerFn({ method: 'POST' })
   .validator((id: string) => id)
   .handler(async ({ data: id }) => {

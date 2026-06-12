@@ -1,22 +1,55 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { getTasks, updateTaskStatus, createTask, deleteTask } from '../server/tasks'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { getProject, getTasks, updateTaskStatus, createTask, deleteTask } from '../server/tasks'
 import styled from 'styled-components'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { DropResult } from '@hello-pangea/dnd'
 import { useState, useEffect } from 'react'
 import type { Task, User } from '../db/memoryStore'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, LayoutGrid, List as ListIcon } from 'lucide-react'
 import { TaskModal } from '../components/TaskModal'
 
 type PopulatedTask = Task & { assignee?: User };
 
 export const Route = createFileRoute('/projects/$projectId/board')({
   loader: async ({ params }) => {
+    const project = await getProject({ data: params.projectId })
     const tasks = await getTasks({ data: params.projectId })
-    return { tasks, projectId: params.projectId }
+    if (!project) throw new Error('Project not found')
+    return { project, tasks, projectId: params.projectId }
   },
-  component: Board,
+  component: ProjectBoard,
 })
+
+const HeaderContainer = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+`
+
+const ProjectTitle = styled.h1`
+  font-size: ${({ theme }) => theme.typography.sizes.xl};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+`
+
+const Tabs = styled.div`
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  margin-bottom: 24px;
+`
+
+const Tab = styled(Link)`
+  padding: 8px 16px;
+  text-decoration: none;
+  color: ${({ theme }) => theme.colors.text.light};
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &.active {
+    color: ${({ theme }) => theme.colors.primary};
+    border-bottom: 2px solid ${({ theme }) => theme.colors.primary};
+  }
+`
 
 const BoardContainer = styled.div`
   display: flex;
@@ -155,8 +188,8 @@ const COLUMNS: { id: Task['status']; title: string }[] = [
   { id: 'done', title: 'Done' }
 ]
 
-function Board() {
-  const { tasks: initialTasks, projectId } = Route.useLoaderData()
+function ProjectBoard() {
+  const { project, tasks: initialTasks, projectId } = Route.useLoaderData()
   const [tasks, setTasks] = useState<PopulatedTask[]>(initialTasks)
   const [addingToCol, setAddingToCol] = useState<Task['status'] | null>(null)
   const [newTaskTitle, setNewTaskTitle] = useState('')
@@ -238,7 +271,18 @@ function Board() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: '24px' }}>Project Board</h1>
+      <HeaderContainer>
+        <ProjectTitle>{project.name}</ProjectTitle>
+        <Tabs>
+          <Tab to={`/projects/${project.id}/board`} className="active">
+            <LayoutGrid size={16} /> Board
+          </Tab>
+          <Tab to={`/projects/${project.id}/list`}>
+            <ListIcon size={16} /> List
+          </Tab>
+        </Tabs>
+      </HeaderContainer>
+      
       <DragDropContext onDragEnd={onDragEnd}>
         <BoardContainer>
           {COLUMNS.map(col => (

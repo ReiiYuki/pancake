@@ -47,6 +47,8 @@ export interface Document {
   authorId: string;
   createdAt: string;
   updatedAt: string;
+  coverUrl?: string;
+  icon?: string;
 }
 
 export const db = {

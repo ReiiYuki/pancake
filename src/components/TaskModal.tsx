@@ -2,8 +2,9 @@ import styled from 'styled-components';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { useState, useEffect } from 'react';
-import { getComments, createComment } from '../server/tasks';
+import { getComments, createComment, updateTask } from '../server/tasks';
 import type { Task, User, Comment } from '../db/memoryStore';
+import { RichTextEditor } from './ui/RichTextEditor';
 
 const ContentWrapper = styled.div`
   display: flex;
@@ -35,19 +36,8 @@ const SectionHeader = styled.h3`
   margin-top: 24px;
 `;
 
-const Description = styled.div`
-  background: rgba(0,0,0,0.02);
-  padding: 16px;
-  border-radius: 8px;
-  min-height: 100px;
-  font-size: 14px;
-  white-space: pre-wrap;
-  border: 1px solid transparent;
-  cursor: pointer;
-  
-  &:hover {
-    background: rgba(0,0,0,0.04);
-  }
+const DescriptionContainer = styled.div`
+  margin-bottom: 24px;
 `;
 
 const PropertyLabel = styled.div`
@@ -124,11 +114,25 @@ export function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
   const [comments, setComments] = useState<PopulatedComment[]>([]);
   const [newComment, setNewComment] = useState('');
 
+  const [description, setDescription] = useState('');
+
   useEffect(() => {
     if (isOpen && task) {
       getComments({ data: task.id }).then(setComments);
+      setDescription(task.description || '');
     }
   }, [isOpen, task]);
+
+  // Debounced description save
+  useEffect(() => {
+    if (!task) return;
+    const handler = setTimeout(() => {
+      if (description !== task.description) {
+        updateTask({ data: { id: task.id, description } });
+      }
+    }, 1000);
+    return () => clearTimeout(handler);
+  }, [description, task]);
 
   if (!task) return null;
 
@@ -149,9 +153,13 @@ export function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
         <MainColumn>
           <Title>{task.title}</Title>
           <SectionHeader>Description</SectionHeader>
-          <Description>
-            {task.description || 'Add a more detailed description...'}
-          </Description>
+          <DescriptionContainer>
+            <RichTextEditor 
+              content={description}
+              onChange={setDescription}
+              placeholder="Add a more detailed description..."
+            />
+          </DescriptionContainer>
 
           <SectionHeader>Activity</SectionHeader>
           <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>

@@ -133,7 +133,7 @@ function DocsList() {
           <Link to={`/docs/${doc.id}`} key={doc.id} style={{ textDecoration: 'none', color: 'inherit' }}>
             <DocCard $clickable $glass>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <FileText size={24} color="#6D7A8C" />
+                {doc.icon ? <span style={{ fontSize: '24px' }}>{doc.icon}</span> : <FileText size={24} color="#6D7A8C" />}
                 <div style={{ fontWeight: 500 }}>{doc.title}</div>
               </div>
               <button className="delete-btn" onClick={(e) => handleDelete(e, doc.id)}>
