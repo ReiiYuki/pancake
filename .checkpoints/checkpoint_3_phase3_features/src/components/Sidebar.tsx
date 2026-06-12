@@ -2,7 +2,6 @@ import { Link, useLocation } from '@tanstack/react-router';
 import { styled } from 'styled-components';
 import { LayoutDashboard, FileText, Settings, Briefcase } from 'lucide-react';
 import type { Project } from '../db/memoryStore';
-import ThemeToggle from './ThemeToggle';
 
 const SidebarContainer = styled.div`
   width: 260px;
@@ -98,9 +97,6 @@ export default function Sidebar({ projects }: { projects: Project[] }) {
         </NavItem>
       </nav>
       <Spacer />
-      <div style={{ padding: '0 16px', marginBottom: '16px' }}>
-        <ThemeToggle />
-      </div>
       <NavItem to="/about" activeProps={{ className: 'active' }}>
         <Settings size={20} /> Settings
       </NavItem>

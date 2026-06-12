@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useThemeContext } from '../theme/ThemeProvider'
+import { useThemeContext } from './theme/ThemeProvider'
 
 export default function ThemeToggle() {
   const { isDarkMode, toggleTheme } = useThemeContext();
