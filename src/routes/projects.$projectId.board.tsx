@@ -4,6 +4,7 @@ import { styled } from 'styled-components'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { DropResult } from '@hello-pangea/dnd'
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { Task, User } from '../db/memoryStore'
 import { Plus, Trash2, LayoutGrid, List as ListIcon } from 'lucide-react'
 import { TaskModal } from '../components/TaskModal'
@@ -102,7 +103,7 @@ const TaskList = styled.div<{ $isDraggingOver: boolean }>`
   min-height: 100px;
 `
 
-const TaskCard = styled.div<{ $isDragging: boolean }>`
+const TaskCard = styled(motion.div)<{ $isDragging: boolean }>`
   background-color: white;
   padding: ${({ theme }) => theme.spacing.md};
   border-radius: ${({ theme }) => theme.borderRadius.md};
@@ -331,35 +332,41 @@ function ProjectBoard() {
                     {...provided.droppableProps}
                     $isDraggingOver={snapshot.isDraggingOver}
                   >
-                    {tasks.filter(t => t.status === col.id && (filterAssignee === 'all' || (filterAssignee === 'unassigned' ? !t.assigneeId : t.assigneeId === filterAssignee)) && (filterPriority === 'all' || t.priority === filterPriority)).map((task, index) => (
-                      <Draggable key={task.id} draggableId={task.id} index={index}>
-                        {(provided, snapshot) => (
-                          <TaskCard
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            $isDragging={snapshot.isDragging}
-                            onClick={() => setSelectedTask(task)}
-                          >
-                            <div style={{ fontWeight: 500, marginBottom: '8px', paddingRight: '20px' }}>{task.title}</div>
-                            <button className="delete-btn" onClick={(e) => handleDeleteTask(e, task.id)}>
-                              <Trash2 size={14} />
-                            </button>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div style={{ fontSize: '12px', color: '#6D7A8C' }}>{task.priority} priority</div>
-                              {task.assignee && (
-                                <img 
-                                  src={task.assignee.avatarUrl} 
-                                  alt={task.assignee.name} 
-                                  title={task.assignee.name}
-                                  style={{ width: '24px', height: '24px', borderRadius: '50%' }}
-                                />
-                              )}
-                            </div>
-                          </TaskCard>
-                        )}
-                      </Draggable>
-                    ))}
+                    <AnimatePresence>
+                      {tasks.filter(t => t.status === col.id && (filterAssignee === 'all' || (filterAssignee === 'unassigned' ? !t.assigneeId : t.assigneeId === filterAssignee)) && (filterPriority === 'all' || t.priority === filterPriority)).map((task, index) => (
+                        <Draggable key={task.id} draggableId={task.id} index={index}>
+                          {(provided, snapshot) => (
+                            <TaskCard
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              $isDragging={snapshot.isDragging}
+                              onClick={() => setSelectedTask(task)}
+                              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <div style={{ fontWeight: 500, marginBottom: '8px', paddingRight: '20px' }}>{task.title}</div>
+                              <button className="delete-btn" onClick={(e) => handleDeleteTask(e, task.id)}>
+                                <Trash2 size={14} />
+                              </button>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ fontSize: '12px', color: '#6D7A8C' }}>{task.priority} priority</div>
+                                {task.assignee && (
+                                  <img 
+                                    src={task.assignee.avatarUrl} 
+                                    alt={task.assignee.name} 
+                                    title={task.assignee.name}
+                                    style={{ width: '24px', height: '24px', borderRadius: '50%' }}
+                                  />
+                                )}
+                              </div>
+                            </TaskCard>
+                          )}
+                        </Draggable>
+                      ))}
+                    </AnimatePresence>
                     {provided.placeholder}
                   </TaskList>
                 )}

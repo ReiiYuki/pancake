@@ -2,8 +2,8 @@ import { styled } from 'styled-components';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { useState, useEffect } from 'react';
-import { getComments, createComment, updateTask, getSubtasks, createTask } from '../server/tasks';
-import type { Task, User, Comment } from '../db/memoryStore';
+import { getComments, createComment, updateTask, getSubtasks, createTask, getTaskActivities } from '../server/tasks';
+import type { Task, User, Comment, TaskActivity } from '../db/memoryStore';
 import { RichTextEditor } from './ui/RichTextEditor';
 import { useRouter } from '@tanstack/react-router';
 
@@ -129,6 +129,7 @@ interface TaskModalProps {
 
 export function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
   const [comments, setComments] = useState<PopulatedComment[]>([]);
+  const [activities, setActivities] = useState<(TaskActivity & { user?: User })[]>([]);
   const [subtasks, setSubtasks] = useState<PopulatedTask[]>([]);
   const [newComment, setNewComment] = useState('');
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
@@ -140,6 +141,7 @@ export function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
     if (isOpen && task) {
       getComments({ data: task.id }).then(setComments);
       getSubtasks({ data: task.id }).then(setSubtasks);
+      getTaskActivities({ data: task.id }).then(setActivities);
       setDescription(task.description || '');
     }
   }, [isOpen, task]);
@@ -257,6 +259,22 @@ export function TaskModal({ task, isOpen, onClose }: TaskModalProps) {
               </CommentItem>
             ))}
           </CommentList>
+
+          {activities.length > 0 && (
+            <>
+              <SectionHeader>Audit Log</SectionHeader>
+              <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {activities.map(a => (
+                  <div key={a.id} style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px', color: '#6D7A8C' }}>
+                    <Avatar src={a.user?.avatarUrl} alt={a.user?.name} style={{ width: '16px', height: '16px' }} />
+                    <span style={{ fontWeight: 500, color: '#151B26' }}>{a.user?.name}</span>
+                    <span>{a.details}</span>
+                    <span style={{ marginLeft: 'auto' }}>{new Date(a.createdAt).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </MainColumn>
 
         <SidebarColumn>

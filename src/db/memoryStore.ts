@@ -16,6 +16,15 @@ export interface Comment {
   createdAt: string;
 }
 
+export interface TaskActivity {
+  id: string;
+  taskId: string;
+  userId: string;
+  action: 'created' | 'status_changed' | 'priority_changed' | 'assignee_changed';
+  details: string;
+  createdAt: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -62,6 +71,7 @@ export const db = {
   ] as Project[],
   documents: [] as Document[],
   tasks: [] as Task[],
+  activities: [] as TaskActivity[],
 };
 
 // Seed some data

@@ -25,6 +25,16 @@ export const createTask = createServerFn({ method: 'POST' })
       labels: []
     };
     db.tasks.push(newTask);
+    
+    db.activities.push({
+      id: uuidv4(),
+      taskId: newTask.id,
+      userId: 'user-1',
+      action: 'created',
+      details: 'Created the task',
+      createdAt: new Date().toISOString()
+    });
+
     return newTask;
   });
 
@@ -33,7 +43,20 @@ export const updateTaskStatus = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const taskIndex = db.tasks.findIndex((t) => t.id === data.id);
     if (taskIndex > -1) {
+      const oldStatus = db.tasks[taskIndex].status;
       db.tasks[taskIndex].status = data.status;
+      
+      if (oldStatus !== data.status) {
+        db.activities.push({
+          id: uuidv4(),
+          taskId: data.id,
+          userId: 'user-1',
+          action: 'status_changed',
+          details: `Changed status from ${oldStatus} to ${data.status}`,
+          createdAt: new Date().toISOString()
+        });
+      }
+      
       return db.tasks[taskIndex];
     }
     throw new Error('Task not found');
@@ -44,7 +67,31 @@ export const updateTask = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const taskIndex = db.tasks.findIndex((t) => t.id === data.id);
     if (taskIndex > -1) {
+      const oldTask = { ...db.tasks[taskIndex] };
       db.tasks[taskIndex] = { ...db.tasks[taskIndex], ...data, updatedAt: new Date().toISOString() };
+      
+      if (data.priority && data.priority !== oldTask.priority) {
+        db.activities.push({
+          id: uuidv4(),
+          taskId: data.id,
+          userId: 'user-1',
+          action: 'priority_changed',
+          details: `Changed priority from ${oldTask.priority} to ${data.priority}`,
+          createdAt: new Date().toISOString()
+        });
+      }
+      
+      if ('assigneeId' in data && data.assigneeId !== oldTask.assigneeId) {
+        db.activities.push({
+          id: uuidv4(),
+          taskId: data.id,
+          userId: 'user-1',
+          action: 'assignee_changed',
+          details: data.assigneeId ? `Assigned to ${data.assigneeId}` : 'Unassigned the task',
+          createdAt: new Date().toISOString()
+        });
+      }
+
       return db.tasks[taskIndex];
     }
     throw new Error('Task not found');
@@ -74,6 +121,15 @@ export const deleteTask = createServerFn({ method: 'POST' })
 export const getProjects = createServerFn({ method: 'GET' })
   .handler(async () => {
     return db.projects;
+  });
+
+export const getTaskActivities = createServerFn({ method: 'GET' })
+  .validator((taskId: string) => taskId)
+  .handler(async ({ data: taskId }) => {
+    return db.activities.filter((a) => a.taskId === taskId).map(a => {
+      const user = db.users.find(u => u.id === a.userId);
+      return { ...a, user };
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   });
 
 export const getProject = createServerFn({ method: 'GET' })

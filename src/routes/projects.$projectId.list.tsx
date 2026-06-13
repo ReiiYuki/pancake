@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { getProject, getTasks } from '../server/tasks'
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { Task, User } from '../db/memoryStore'
 import { styled } from 'styled-components'
 import { CheckCircle2, Circle, Clock, MoreHorizontal, LayoutGrid, List as ListIcon } from 'lucide-react'
@@ -84,7 +85,7 @@ const Td = styled.td`
   font-size: 14px;
 `
 
-const TaskRow = styled.tr`
+const TaskRow = styled(motion.tr)`
   cursor: pointer;
   transition: background 0.2s;
   &:hover {
@@ -168,36 +169,45 @@ function ProjectListView() {
             </tr>
           </thead>
           <tbody>
-            {tasks.filter(t => 
-              (filterStatus === 'all' || t.status === filterStatus) &&
-              (filterAssignee === 'all' || (filterAssignee === 'unassigned' ? !t.assigneeId : t.assigneeId === filterAssignee)) &&
-              (filterPriority === 'all' || t.priority === filterPriority)
-            ).map((task) => (
-              <TaskRow key={task.id} onClick={() => setSelectedTask(task)}>
-                <Td style={{ fontWeight: 500 }}>{task.title}</Td>
-                <Td>
-                  <StatusBadge $status={task.status}>
-                    {task.status.replace('-', ' ')}
-                  </StatusBadge>
-                </Td>
-                <Td>
-                  {task.assignee ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <img src={task.assignee.avatarUrl} alt="" style={{ width: 24, height: 24, borderRadius: '50%' }} />
-                      {task.assignee.name}
-                    </div>
-                  ) : (
-                    <span style={{ color: '#9e9e9e' }}>Unassigned</span>
-                  )}
-                </Td>
-                <Td style={{ textTransform: 'capitalize' }}>
-                  {task.priority}
-                </Td>
-                <Td style={{ color: '#9e9e9e' }}>
-                  {new Date(task.createdAt).toLocaleDateString()}
-                </Td>
-              </TaskRow>
-            ))}
+            <AnimatePresence>
+              {tasks.filter(t => 
+                (filterStatus === 'all' || t.status === filterStatus) &&
+                (filterAssignee === 'all' || (filterAssignee === 'unassigned' ? !t.assigneeId : t.assigneeId === filterAssignee)) &&
+                (filterPriority === 'all' || t.priority === filterPriority)
+              ).map((task) => (
+                <TaskRow 
+                  key={task.id} 
+                  onClick={() => setSelectedTask(task)}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <Td style={{ fontWeight: 500 }}>{task.title}</Td>
+                  <Td>
+                    <StatusBadge $status={task.status}>
+                      {task.status.replace('-', ' ')}
+                    </StatusBadge>
+                  </Td>
+                  <Td>
+                    {task.assignee ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <img src={task.assignee.avatarUrl} alt="" style={{ width: 24, height: 24, borderRadius: '50%' }} />
+                        {task.assignee.name}
+                      </div>
+                    ) : (
+                      <span style={{ color: '#9e9e9e' }}>Unassigned</span>
+                    )}
+                  </Td>
+                  <Td style={{ textTransform: 'capitalize' }}>
+                    {task.priority}
+                  </Td>
+                  <Td style={{ color: '#9e9e9e' }}>
+                    {new Date(task.createdAt).toLocaleDateString()}
+                  </Td>
+                </TaskRow>
+              ))}
+            </AnimatePresence>
           </tbody>
         </Table>
       </div>

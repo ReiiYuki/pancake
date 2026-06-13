@@ -12,3 +12,8 @@
 **Risk Assessment:** Taking a checkpoint after implementing major Phase 3 features (Dark Mode, Subtasks, Tiptap extensions).
 **Description:** Dark Mode UI context added, TaskModal supports subtasks and tags, Board/List views have filters.
 **Files Included:** `src/`, `package.json`, `package-lock.json`, `vite.config.ts`
+
+## [2026-06-13 10:40:00] Checkpoint ID: checkpoint_4_context_refresh
+**Risk Assessment:** Token limit approaching. Checkpointing current state before initiating background loop reset.
+**Description:** Checkpointing after completing the Tiptap slash commands fallback, theme toggle fixes, and verifying the `npm run build` succeeds completely. The next session must resume the exhaustive loop by focusing on adding Framer Motion animations, Task Activity/Audit logs, and Vitest test coverage to fully flesh out the Jira + Notion experience.
+**Files Included:** `src/`
